@@ -2,10 +2,9 @@ import os
 import requests
 import base64
 from datetime import datetime
-import json
 from requests.auth import HTTPBasicAuth
 from flask import Flask, request, jsonify
-from .db import get_db_connection
+import psycopg2
 
 app = Flask(__name__)
 
@@ -14,6 +13,16 @@ PASSKEY = os.getenv("PASSKEY")
 CONSUMER_KEY = os.getenv("CONSUMER_KEY")
 CONSUMER_SECRET = os.getenv("CONSUMER_SECRET")
 CALLBACK_URL = os.getenv("CALLBACK_URL")  # Must be the HTTPS Vercel URL
+
+# --- DB Connection ---
+def get_db_connection():
+    return psycopg2.connect(
+        host=os.getenv("DB_HOST"),
+        dbname=os.getenv("DB_NAME"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD"),
+        port=os.getenv("DB_PORT")
+    )
 
 def accessToken():
     try:
@@ -71,3 +80,29 @@ def stk_push():
         return jsonify({"success": False, "message": "Request failed", "error": str(e)}), 500
     except Exception as e:
         return jsonify({"success": False, "message": "An error occurred", "error": str(e)}), 500
+
+# --- Callback Endpoint ---
+@app.route("/callback", methods=["POST"])
+def callback():
+    data = request.json or {}
+    print("Callback Data:", data)
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO mpesa_callbacks (callback_data) VALUES (%s)",
+            [str(data)]
+        )
+        conn.commit()
+        cur.close()
+        conn.close()
+    except Exception as e:
+        print("DB error:", e)
+
+    return jsonify({"ResultCode": 0, "ResultDesc": "Accepted"})
+
+# --- Required for Vercel ---
+def handler(request, response=None):
+    with app.request_context(request.environ):
+        return app.full_dispatch_request()
