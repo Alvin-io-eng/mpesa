@@ -95,8 +95,3 @@ def callback():
         print("DB error:", e)
 
     return jsonify({"ResultCode": 0, "ResultDesc": "Accepted"})
-
-# --- Required for Vercel ---
-def handler(request, response=None):
-    with app.request_context(request.environ):
-        return app.full_dispatch_request()
