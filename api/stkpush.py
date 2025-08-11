@@ -1,0 +1,73 @@
+import os
+import requests
+import base64
+from datetime import datetime
+import json
+from requests.auth import HTTPBasicAuth
+from flask import Flask, request, jsonify
+from .db import get_db_connection
+
+app = Flask(__name__)
+
+BUSINESS_SHORTCODE = os.getenv("BUSINESS_SHORTCODE")
+PASSKEY = os.getenv("PASSKEY")
+CONSUMER_KEY = os.getenv("CONSUMER_KEY")
+CONSUMER_SECRET = os.getenv("CONSUMER_SECRET")
+CALLBACK_URL = os.getenv("CALLBACK_URL")  # Must be the HTTPS Vercel URL
+
+def accessToken():
+    try:
+        api_url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+        r = requests.get(api_url, auth=HTTPBasicAuth(CONSUMER_KEY, CONSUMER_SECRET))
+        r.raise_for_status()
+        data = r.json()
+        access_token = "Bearer " + data['access_token']
+        return access_token
+    except Exception as e:
+        return {
+            'success': False,
+            'message': "Failed to generate access token",
+            "error": str(e)
+        }
+
+@app.route('/stkpush')
+def stk_push():
+    try:
+        phone_number = '254728902689'
+        amount = '1'
+        if not phone_number or not amount:
+            return jsonify({"success": False, "message": "Phone number and amount are required"}), 400
+
+        access_token = accessToken()
+        if 'success' in access_token and not access_token['success']:
+            return jsonify(access_token), 500
+
+        headers = {
+            'Authorization': access_token,
+            'Content-Type': 'application/json'
+        }
+
+        payload = {
+            "BusinessShortCode": BUSINESS_SHORTCODE,
+            "Password": base64.b64encode(f"{BUSINESS_SHORTCODE}{PASSKEY}{datetime.now().strftime('%Y%m%d%H%M%S')}".encode()).decode('utf-8'),
+            "Timestamp": datetime.now().strftime('%Y%m%d%H%M%S'),
+            "TransactionType": "CustomerPayBillOnline",
+            "Amount": amount,
+            "PartyA": phone_number,
+            "PartyB": BUSINESS_SHORTCODE,
+            "PhoneNumber": phone_number,
+            "CallBackURL": CALLBACK_URL,
+            "AccountReference": "Test123",
+            "TransactionDesc": "Payment for testing"
+        }
+
+        api_url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
+        response = requests.post(api_url, json=payload, headers=headers)
+        response.raise_for_status()
+
+        return jsonify(response.json()), 200
+
+    except requests.exceptions.RequestException as e:
+        return jsonify({"success": False, "message": "Request failed", "error": str(e)}), 500
+    except Exception as e:
+        return jsonify({"success": False, "message": "An error occurred", "error": str(e)}), 500
