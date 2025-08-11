@@ -12,17 +12,11 @@ BUSINESS_SHORTCODE = os.getenv("BUSINESS_SHORTCODE")
 PASSKEY = os.getenv("PASSKEY")
 CONSUMER_KEY = os.getenv("CONSUMER_KEY")
 CONSUMER_SECRET = os.getenv("CONSUMER_SECRET")
-CALLBACK_URL = os.getenv("CALLBACK_URL")  # Must be the HTTPS Vercel URL
+CALLBACK_URL = os.getenv("CALLBACK_URL")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-# --- DB Connection ---
 def get_db_connection():
-    return psycopg2.connect(
-        host=os.getenv("DB_HOST"),
-        dbname=os.getenv("DB_NAME"),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD"),
-        port=os.getenv("DB_PORT")
-    )
+    return psycopg2.connect(DATABASE_URL)
 
 def accessToken():
     try:
