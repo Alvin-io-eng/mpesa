@@ -94,6 +94,6 @@ def callback():
         conn.close()
     except Exception as e:
         print("DB error:", str(e))
-        return jsonify({"ResultCode": -1, "ErrorDesc": "Failed due to Database error."}), 400
+        return jsonify({"ResultCode": -1, "ErrorDesc": f"Failed due to Database error: {str(e)}"}), 400
 
     return jsonify({"ResultCode": 0, "ResultDesc": "Accepted"}), 200
