@@ -75,17 +75,18 @@ def stk_push():
     except Exception as e:
         return jsonify({"success": False, "message": "An error occurred", "error": str(e)}), 500
 
-# --- Callback Endpoint ---
-@app.route("/callback", methods=["POST","GET"])
+from flask import request, jsonify
+
+@app.route("/callback", methods=["POST", "GET"])
 def callback():
-    data = request.json or {}
+    data = request.get_json(force=True, silent=True) or {}
     print("Callback Data:", data)
 
     try:
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute(
-            "INSERT INTO mpesa_callbacks (callback_data) VALUES (%s(callbackData)s)",
+            "INSERT INTO mpesa_callbacks (callback_data) VALUES (%s)",
             [str(data)]
         )
         conn.commit()
@@ -93,6 +94,6 @@ def callback():
         conn.close()
     except Exception as e:
         print("DB error:", str(e))
-        return jsonify({"ResultCode":-1,"ErrorDesc":"Failed due to Database error." }),400
+        return jsonify({"ResultCode": -1, "ErrorDesc": "Failed due to Database error."}), 400
 
-    return jsonify({"ResultCode": 0, "ResultDesc": "Accepted"}),200
+    return jsonify({"ResultCode": 0, "ResultDesc": "Accepted"}), 200
