@@ -82,18 +82,18 @@ def callback():
     data = request.get_json(force=True, silent=True) or {}
     print("Callback Data:", data)
 
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute(
-            "INSERT INTO mpesa_callbacks (callback_data) VALUES (%s)",
-            [str(data)]
-        )
-        conn.commit()
-        cur.close()
-        conn.close()
-    except Exception as e:
-        print("DB error:", str(e))
-        return jsonify({"ResultCode": -1, "ErrorDesc": f"Failed due to Database error: {str(e)}"}), 400
+    # try:
+    #     conn = get_db_connection()
+    #     cur = conn.cursor()
+    #     cur.execute(
+    #         "INSERT INTO mpesa_callbacks (callback_data) VALUES (%s)",
+    #         [str(data)]
+    #     )
+    #     conn.commit()
+    #     cur.close()
+    #     conn.close()
+    # except Exception as e:
+    #     print("DB error:", str(e))
+    #     return jsonify({"ResultCode": -1, "ErrorDesc": f"Failed due to Database error: {str(e)}"}), 400
 
-    return jsonify({"ResultCode": 0, "ResultDesc": "Accepted"}), 200
+    return jsonify({"ResultCode": 0, "ResultDesc": "Accepted", "Callbackdata": data}), 200
