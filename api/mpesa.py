@@ -82,6 +82,7 @@ def callback():
     data = request.get_json(force=True, silent=True) or {}
     print("Callback Data:", data)
 
+    conn = None  # Initialize conn to None
     try:
         conn = get_db_connection()
         cur = conn.cursor()
@@ -91,9 +92,11 @@ def callback():
         )
         conn.commit()
         cur.close()
-        conn.close()
     except Exception as e:
         print("DB error:", str(e))
-        return jsonify({"ResultCode": -1, "ErrorDesc": f"Failed due to Database error: {str(e)}", "DATABASE URL":f"here is the url: {conn}"}), 400
+        return jsonify({"ResultCode": -1, "ErrorDesc": f"Failed due to Database error: {str(e)}"}), 400
+    finally:
+        if conn:
+            conn.close()
 
     return jsonify({"ResultCode": 0, "ResultDesc": "Accepted", "Callbackdata": data}), 200
