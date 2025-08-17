@@ -4,7 +4,7 @@ import base64
 from datetime import datetime
 from requests.auth import HTTPBasicAuth
 from flask import Flask, request, jsonify
-import psycopg2
+import psycopg
 
 app = Flask(__name__)
 
@@ -13,10 +13,11 @@ PASSKEY = os.getenv("PASSKEY")
 CONSUMER_KEY = os.getenv("CONSUMER_KEY")
 CONSUMER_SECRET = os.getenv("CONSUMER_SECRET")
 CALLBACK_URL = os.getenv("CALLBACK_URL")
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv("POSTGRES_URL")
 
 def get_db_connection():
-    return psycopg2.connect(DATABASE_URL)
+    # The new library connects directly using the DATABASE_URL
+    return psycopg.connect(DATABASE_URL, autocommit=True)
 
 def accessToken():
     try:
@@ -90,7 +91,6 @@ def callback():
             "INSERT INTO mpesa_callbacks (callback_data) VALUES (%s)",
             [str(data)]
         )
-        conn.commit()
         cur.close()
     except Exception as e:
         print("DB error:", str(e))
