@@ -1,10 +1,15 @@
 {
   "version": 2,
   "builds": [
-    { "src": "api/mpesa.py", "use": "@vercel/python" }
+    {
+      "src": "api/mpesa.py",
+      "use": "@vercel/python"
+    }
   ],
   "routes": [
-    { "src": "/stkpush", "dest": "/api/mpesa.py" },
-    { "src": "/callback", "dest": "/api/mpesa.py" }
+    {
+      "src": "/(.*)",
+      "dest": "/api/mpesa.py"
+    }
   ]
 }
