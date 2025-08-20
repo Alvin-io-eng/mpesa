@@ -42,7 +42,7 @@ def get_access_token():
 def stk_push():
     """Initiates an STK Push request."""
     try:
-        phone_number = '254728902689' # Example phone number
+        phone_number = '254796130037' # Example phone number
         amount = '1' # Example amount
 
         if not all([phone_number, amount]):
