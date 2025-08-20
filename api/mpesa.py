@@ -5,6 +5,7 @@ from datetime import datetime
 from requests.auth import HTTPBasicAuth
 from flask import Flask, request, jsonify
 import psycopg
+import json
 
 app = Flask(__name__)
 
@@ -90,7 +91,6 @@ def stk_push():
 @app.route("/callback", methods=["POST"])
 def callback():
     """Handles the callback response from M-Pesa."""
-    # Use get_json with silent=True to avoid errors on empty/invalid JSON
     data = request.get_json(silent=True)
     if not data:
         print("Callback received with no JSON data.")
@@ -102,21 +102,19 @@ def callback():
     try:
         conn = get_db_connection()
         with conn.cursor() as cur:
-            # Storing the entire JSON data is better for flexibility
+            # Correctly insert the JSON data
             cur.execute(
                 "INSERT INTO mpesa_callbacks (callback_data) VALUES (%s)",
-                (jsonify(data),) # Use jsonify to properly format the data for JSONB column type
+                (json.dumps(data),)
             )
         print("Callback data stored successfully.")
     except psycopg.Error as e:
         print(f"Database error: {e}")
-        # Avoid exposing detailed DB errors to the client
         return jsonify({"ResultCode": -1, "ResultDesc": "Failed due to a database error."}), 500
     finally:
         if conn:
             conn.close()
 
-    # Acknowledge receipt to M-Pesa API
     return jsonify({"ResultCode": 0, "ResultDesc": "Accepted"}), 200
 
 # This allows running the app locally for testing if needed
